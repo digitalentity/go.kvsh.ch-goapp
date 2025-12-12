@@ -9,11 +9,7 @@ import (
 	"go.kvsh.ch/goapp/module"
 )
 
-var _ module.Module = (*Module)(nil)
-
-func Key() module.Key {
-	return module.Key("ginhttp")
-}
+var Data = module.NewData[*Module]("ginhttp")
 
 type Config struct {
 	Address string
@@ -34,8 +30,8 @@ func New(cfg *Config) *Module {
 	}
 }
 
-func (m *Module) Name() module.Key {
-	return Key()
+func (m *Module) Name() string {
+	return Data.Name()
 }
 
 func (m *Module) Run(ctx context.Context) error {

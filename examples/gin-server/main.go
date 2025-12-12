@@ -10,17 +10,19 @@ import (
 	"go.kvsh.ch/goapp/module"
 )
 
+var Data = module.NewData[*Server]("demo-gin-server")
+
 type Server struct {
 	module.ModuleWithoutRun
 }
 
-func (s *Server) Name() module.Key {
-	return module.Key("demo-gin-server")
+func (s *Server) Name() string {
+	return Data.Name()
 }
 
 func (s *Server) Depends() []module.Key {
 	return []module.Key{
-		ginhttp.Key(),
+		ginhttp.Data,
 	}
 }
 
@@ -31,7 +33,7 @@ func (s *Server) HandlePing(c *gin.Context) {
 }
 
 func (s *Server) Configure(b *module.Binder) error {
-	g := b.Get(ginhttp.Key()).(*ginhttp.Module)
+	g := ginhttp.Data.Get(b)
 	g.GET("/ping", s.HandlePing)
 	return nil
 }
@@ -41,14 +43,11 @@ func New() *Server {
 }
 
 func main() {
-	bundle := module.Bundle{}
 
-	bundle.Add(New())
-	bundle.Add(ginhttp.New(&ginhttp.Config{
+	goapp.Install(New())
+	goapp.Install(ginhttp.New(&ginhttp.Config{
 		Address: ":8080",
 	}))
-
-	goapp.InstallBundle(bundle)
 
 	goapp.Run(context.Background())
 }

@@ -14,12 +14,6 @@ func Install(m module.Module) {
 	defaultBinder.Install(m)
 }
 
-func InstallBundle(b module.Bundle) {
-	for _, m := range b {
-		defaultBinder.Install(m)
-	}
-}
-
 func Run(ctx context.Context) error {
 	sctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()

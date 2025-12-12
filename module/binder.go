@@ -24,13 +24,13 @@ type binding struct {
 
 type Binder struct {
 	done    bool
-	modules map[Key]*binding
+	modules map[string]*binding
 }
 
 func NewBinder() *Binder {
 	return &Binder{
 		done:    false,
-		modules: make(map[Key]*binding),
+		modules: make(map[string]*binding),
 	}
 }
 
@@ -54,17 +54,14 @@ func (b *Binder) Install(m Module) {
 	slog.Info("binder: installed module", "name", m.Name())
 }
 
-// Get retrieves a module by its key.
-// Get also ensures that the module and all its dependencies have been configured.
-func (b *Binder) Get(key Key) Module {
+func (b *Binder) configureAndGetModule(keyName string) Module {
+	// Can only be used during configure
 	b.assureNotDone()
-	return b.configureAndGetModule(key)
-}
 
-func (b *Binder) configureAndGetModule(key Key) Module {
-	binding, exists := b.modules[key]
+	// Check that the module exists
+	binding, exists := b.modules[keyName]
 	if !exists {
-		panic("binder: module not found: " + string(key))
+		panic("binder: module not found: " + keyName)
 	}
 
 	switch binding.state {
@@ -72,7 +69,7 @@ func (b *Binder) configureAndGetModule(key Key) Module {
 		return binding.module
 
 	case bindingStateConfiguring:
-		panic("binder: circular dependency detected for module: " + string(key))
+		panic("binder: circular dependency detected for module: " + keyName)
 
 	case bindingStateUnconfigured:
 		// Mark as configuring to detect circular dependencies
@@ -81,14 +78,14 @@ func (b *Binder) configureAndGetModule(key Key) Module {
 		// Configure dependencies first
 		decl := binding.module.Depends()
 		for _, depKey := range decl {
-			b.configureAndGetModule(depKey)
+			b.configureAndGetModule(depKey.Name())
 		}
 
 		// Now configure the module itself
 		slog.Info("binder: configuring module", "name", binding.module.Name())
 		err := binding.module.Configure(b)
 		if err != nil {
-			panic("binder: failed to configure module " + string(key) + ": " + err.Error())
+			panic("binder: failed to configure module " + keyName + ": " + err.Error())
 		}
 
 		// Mark as configured
@@ -96,7 +93,7 @@ func (b *Binder) configureAndGetModule(key Key) Module {
 
 		return binding.module
 	default:
-		panic("binder: unknown binding state for module: " + string(key))
+		panic("binder: unknown binding state for module: " + keyName)
 	}
 }
 
@@ -119,7 +116,7 @@ func (b *Binder) Run(ctx context.Context) error {
 	// Collect all modules to run. This will implicitly configure them all.
 	mods := make([]Module, 0, len(b.modules))
 	for _, k := range maps.Keys(b.modules) {
-		mods = append(mods, b.Get(k))
+		mods = append(mods, b.configureAndGetModule(k))
 	}
 
 	// Mark binder as done to prevent further modifications. Any calls to Install or Get will panic.

@@ -9,17 +9,19 @@ import (
 	"go.kvsh.ch/goapp/module"
 )
 
+var Data = module.NewData[*Module]("demo-timer")
+
 type Module struct {
 	module.ModuleWithoutRun
 }
 
-func (m *Module) Name() module.Key {
-	return module.Key("examples-timer")
+func (m *Module) Name() string {
+	return Data.Name()
 }
 
 func (m *Module) Depends() []module.Key {
 	return []module.Key{
-		timer.Key(),
+		timer.Data,
 	}
 }
 
@@ -29,7 +31,7 @@ func (m *Module) TimerCallback(ctx context.Context, t time.Time) error {
 }
 
 func (m *Module) Configure(b *module.Binder) error {
-	t := b.Get(timer.Key()).(*timer.Module)
+	t := timer.Data.Get(b)
 	t.Register(1*time.Second, m.TimerCallback)
 	return nil
 }

@@ -2,11 +2,31 @@ package module
 
 import "context"
 
-type Key string
+type Data[T any] struct {
+	name string
+}
+
+func NewData[T any](name string) *Data[T] {
+	return &Data[T]{
+		name: name,
+	}
+}
+
+func (d *Data[T]) Name() string {
+	return d.name
+}
+
+func (d *Data[T]) Get(b *Binder) T {
+	return b.configureAndGetModule(d.name).(T)
+}
+
+type Key interface {
+	Name() string
+}
 
 type Module interface {
 	// Name returns the name of the module.which also serves as its unique identifier.
-	Name() Key
+	Name() string
 
 	// Declares returns the module's dependencies and provisions.
 	Depends() []Key

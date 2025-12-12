@@ -7,17 +7,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	DataA = NewData[*ModuleA]("module-a")
+	DataB = NewData[*ModuleB]("module-b")
+	DataC = NewData[*ModuleC]("module-c")
+	DataD = NewData[*ModuleD]("module-d")
+	DataE = NewData[*ModuleE]("module-e")
+	DataF = NewData[*ModuleF]("module-f")
+	DataG = NewData[*ModuleG]("module-g")
+	DataH = NewData[*ModuleH]("module-h")
+)
+
 type ModuleA struct {
 	ModuleWithoutRun
 	configured bool
 }
 
-func (m *ModuleA) Name() Key {
-	return "module-a"
+func (m *ModuleA) Name() string {
+	return DataA.Name()
 }
 
 func (m *ModuleA) Depends() []Key {
-	return []Key{"module-b"}
+	return []Key{DataB}
 }
 
 func (m *ModuleA) Configure(b *Binder) error {
@@ -31,8 +42,8 @@ type ModuleB struct {
 	configured bool
 }
 
-func (m *ModuleB) Name() Key {
-	return "module-b"
+func (m *ModuleB) Name() string {
+	return DataB.Name()
 }
 
 func (m *ModuleB) Configure(b *Binder) error {
@@ -45,12 +56,12 @@ type ModuleC struct {
 	configured bool
 }
 
-func (m *ModuleC) Name() Key {
-	return "module-c"
+func (m *ModuleC) Name() string {
+	return DataC.Name()
 }
 
 func (m *ModuleC) Depends() []Key {
-	return []Key{"module-a", "module-b"}
+	return []Key{DataA, DataB}
 }
 
 func (m *ModuleC) Configure(b *Binder) error {
@@ -64,12 +75,12 @@ type ModuleD struct {
 	ModuleWithoutConfigure
 }
 
-func (m *ModuleD) Name() Key {
-	return "module-d"
+func (m *ModuleD) Name() string {
+	return DataD.Name()
 }
 
 func (m *ModuleD) Depends() []Key {
-	return []Key{"module-e"}
+	return []Key{DataE}
 }
 
 type ModuleE struct {
@@ -77,12 +88,12 @@ type ModuleE struct {
 	ModuleWithoutConfigure
 }
 
-func (m *ModuleE) Name() Key {
-	return "module-e"
+func (m *ModuleE) Name() string {
+	return DataE.Name()
 }
 
 func (m *ModuleE) Depends() []Key {
-	return []Key{"module-d"}
+	return []Key{DataD}
 }
 
 // Module F will call a Get() during Configure to test that behavior.
@@ -91,17 +102,17 @@ type ModuleF struct {
 	configured bool
 }
 
-func (m *ModuleF) Name() Key {
-	return "module-f"
+func (m *ModuleF) Name() string {
+	return DataF.Name()
 }
 
 func (m *ModuleF) Depends() []Key {
-	return []Key{"module-b"}
+	return []Key{DataB}
 }
 
 func (m *ModuleF) Configure(b *Binder) error {
 	// Call Get on module-b to ensure it is configured first.
-	_ = b.Get("module-b")
+	_ = DataB.Get(b)
 	m.configured = true
 	return nil
 }
@@ -113,7 +124,7 @@ type ModuleG struct {
 	configured        bool
 }
 
-func (m *ModuleG) Name() Key {
+func (m *ModuleG) Name() string {
 	return "module-g"
 }
 
@@ -125,7 +136,7 @@ func (m *ModuleG) Configure(b *Binder) error {
 
 func (m *ModuleG) Run(ctx context.Context) error {
 	// Illegal: Call Get during Run.
-	_ = m.binder.Get("module-b")
+	_ = DataB.Get(m.binder)
 	return nil
 }
 
@@ -135,8 +146,8 @@ type ModuleH struct {
 	ModuleWithoutDeps
 }
 
-func (m *ModuleH) Name() Key {
-	return "module-h"
+func (m *ModuleH) Name() string {
+	return DataH.Name()
 }
 
 func (m *ModuleH) Configure(b *Binder) error {
@@ -160,7 +171,7 @@ func TestMissingDependency(t *testing.T) {
 
 	// This should panic, because module-a depends on module-b which is not installed.
 	assert.Panics(t, func() {
-		b.Get("module-a")
+		DataB.Get(b)
 	})
 }
 
@@ -176,7 +187,7 @@ func TestMultipleModules(t *testing.T) {
 
 	// Assert that we didn't panic and all modules are configured in the correct order.
 	assert.NotPanics(t, func() {
-		b.Get("module-c")
+		DataC.Get(b)
 	})
 
 	// C depends on A and B, so they should be configured first.
@@ -192,7 +203,7 @@ func TestCircularDependency(t *testing.T) {
 
 	// This should panic due to circular dependency.
 	assert.Panics(t, func() {
-		b.Get("module-d")
+		DataD.Get(b)
 	})
 }
 
@@ -224,7 +235,7 @@ func TestGetDuringConfigure(t *testing.T) {
 
 	// This should not panic. ModuleF calls Get on module-b during Configure.
 	assert.NotPanics(t, func() {
-		b.Get("module-f")
+		_ = DataF.Get(b)
 	})
 
 	assert.True(t, modB.configured, "module-b should be configured")
@@ -239,9 +250,9 @@ func TestIllegalGetDuringRun(t *testing.T) {
 	b.Install(modB)
 	b.Install(modG)
 
-	// This should panic. ModuleG calls Get on module-b during Run.
+	// This should not panic. ModuleG calls Get on module-b during Run.
 	assert.NotPanics(t, func() {
-		b.Get("module-g")
+		_ = DataG.Get(b)
 	})
 
 	// At this point modB should be configured, but modG should not have run yet.
@@ -261,6 +272,6 @@ func TestConfigureError(t *testing.T) {
 
 	// This should panic due to error during Configure.
 	assert.Panics(t, func() {
-		b.Get("module-h")
+		_ = DataH.Get(b)
 	})
 }

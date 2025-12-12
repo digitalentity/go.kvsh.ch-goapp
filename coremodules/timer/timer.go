@@ -11,12 +11,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Ensure Module implements the Module interface.
-var _ module.Module = (*Module)(nil)
-
-func Key() module.Key {
-	return module.Key("timer")
-}
+var Data = module.NewData[*Module]("timer")
 
 type TimerCallbackFn func(ctx context.Context, t time.Time) error
 
@@ -36,8 +31,8 @@ func New() *Module {
 	return &Module{}
 }
 
-func (m *Module) Name() module.Key {
-	return Key()
+func (m *Module) Name() string {
+	return Data.Name()
 }
 
 func runTimerCallback(ctx context.Context, callback TimerCallbackFn, t time.Time) (err error) {
