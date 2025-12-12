@@ -8,16 +8,21 @@ import (
 	"go.kvsh.ch/goapp/module"
 )
 
-func Run(ctx context.Context, modules ...module.Module) error {
-	// Install all modules into the binder.
-	b := module.NewBinder()
-	for _, m := range modules {
-		b.Install(m)
-	}
+var defaultBinder = module.NewBinder()
 
-	// Handler for signals
-	sctx, cancel := signal.NotifyContext(ctx, os.Interrupt, os.Kill)
+func Install(m module.Module) {
+	defaultBinder.Install(m)
+}
+
+func InstallBundle(b module.Bundle) {
+	for _, m := range b {
+		defaultBinder.Install(m)
+	}
+}
+
+func Run(ctx context.Context) error {
+	sctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	return b.Run(sctx)
+	return defaultBinder.Run(sctx)
 }

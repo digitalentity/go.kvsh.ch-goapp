@@ -3,6 +3,7 @@ package module
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"golang.org/x/exp/maps"
 	"golang.org/x/sync/errgroup"
@@ -44,10 +45,13 @@ func (b *Binder) Install(m Module) {
 	if _, exists := b.modules[m.Name()]; exists {
 		panic("binder: module already installed: " + string(m.Name()))
 	}
+
 	b.modules[m.Name()] = &binding{
 		state:  bindingStateUnconfigured,
 		module: m,
 	}
+
+	slog.Info("binder: installed module", "name", m.Name())
 }
 
 // Get retrieves a module by its key.
@@ -75,12 +79,13 @@ func (b *Binder) configureAndGetModule(key Key) Module {
 		binding.state = bindingStateConfiguring
 
 		// Configure dependencies first
-		decl := binding.module.Dependns()
+		decl := binding.module.Depends()
 		for _, depKey := range decl {
 			b.configureAndGetModule(depKey)
 		}
 
 		// Now configure the module itself
+		slog.Info("binder: configuring module", "name", binding.module.Name())
 		err := binding.module.Configure(b)
 		if err != nil {
 			panic("binder: failed to configure module " + string(key) + ": " + err.Error())

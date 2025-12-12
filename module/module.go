@@ -9,7 +9,7 @@ type Module interface {
 	Name() Key
 
 	// Declares returns the module's dependencies and provisions.
-	Dependns() []Key
+	Depends() []Key
 
 	// Configure sets up the module before it is run.
 	// This needs to be deterministic, fast and not require a context.
@@ -23,7 +23,7 @@ type Module interface {
 
 type ModuleWithoutDeps struct{}
 
-func (m *ModuleWithoutDeps) Dependns() []Key {
+func (m *ModuleWithoutDeps) Depends() []Key {
 	return []Key{}
 }
 

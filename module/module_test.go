@@ -16,7 +16,7 @@ func (m *ModuleA) Name() Key {
 	return "module-a"
 }
 
-func (m *ModuleA) Dependns() []Key {
+func (m *ModuleA) Depends() []Key {
 	return []Key{"module-b"}
 }
 
@@ -49,7 +49,7 @@ func (m *ModuleC) Name() Key {
 	return "module-c"
 }
 
-func (m *ModuleC) Dependns() []Key {
+func (m *ModuleC) Depends() []Key {
 	return []Key{"module-a", "module-b"}
 }
 
@@ -68,7 +68,7 @@ func (m *ModuleD) Name() Key {
 	return "module-d"
 }
 
-func (m *ModuleD) Dependns() []Key {
+func (m *ModuleD) Depends() []Key {
 	return []Key{"module-e"}
 }
 
@@ -81,7 +81,7 @@ func (m *ModuleE) Name() Key {
 	return "module-e"
 }
 
-func (m *ModuleE) Dependns() []Key {
+func (m *ModuleE) Depends() []Key {
 	return []Key{"module-d"}
 }
 
@@ -95,7 +95,7 @@ func (m *ModuleF) Name() Key {
 	return "module-f"
 }
 
-func (m *ModuleF) Dependns() []Key {
+func (m *ModuleF) Depends() []Key {
 	return []Key{"module-b"}
 }
 
